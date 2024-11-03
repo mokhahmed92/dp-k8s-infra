@@ -1,0 +1,22 @@
+executor: KubernetesExecutor
+
+# DAG syncing configuration
+dags:
+  # Using Git-sync to pull DAGs from a Git repository
+  gitSync:
+    enabled: true
+    repo: "https://github.com/mokhtar-ahmed/dp-k8s-infra.git"  # Replace with your DAGs repo
+    branch: "main"  # Branch to sync
+    refreshInterval: 60  # Sync every 60 seconds
+    subPath: "airflow/dags"  # Folder within the repo where DAGs are stored
+
+# Airflow configuration
+airflow:
+  image:
+    repository: apache/airflow
+    tag: "2.10.1"  # Replace with the Airflow version you want to use
+  config:
+    AIRFLOW__CORE__LOAD_EXAMPLES: "False"  # Do not load example DAGs
+
+
+

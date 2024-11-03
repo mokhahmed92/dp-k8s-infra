@@ -16,7 +16,7 @@ airflow:
     repository: apache/airflow
     tag: "2.10.1"  # Replace with the Airflow version you want to use
   config:
-    AIRFLOW__CORE__LOAD_EXAMPLES: "False"  # Do not load example DAGs
+    AIRFLOW__CORE__LOAD_EXAMPLES: "True"  # Do not load example DAGs
 
 
 

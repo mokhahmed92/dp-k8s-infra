@@ -1,32 +1,87 @@
-from datetime import datetime, timedelta
+# dags/spark_pi.py
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.providers.cncf.kubernetes.operators.spark_kubernetes import SparkKubernetesOperator
+from airflow.providers.cncf.kubernetes.sensors.spark_kubernetes import SparkKubernetesSensor
+from datetime import datetime, timedelta
 
-# Default arguments to apply to all tasks in the DAG
 default_args = {
     'owner': 'airflow',
-    'retries': 3,
-    'retry_delay': timedelta(minutes=5),
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5)
 }
 
-
-# Define the DAG
-with DAG(
-    dag_id='example_python_operator_dag',
+dag = DAG(
+    'spark_pi_example',
     default_args=default_args,
-    description='A simple DAG using PythonOperator',
-    schedule_interval=timedelta(days=1),  # Run daily
-    start_date=datetime(2023, 1, 1),
-    catchup=False,
-) as dag:
+    schedule_interval=timedelta(days=1),
+    description='Submit Spark Pi Job on Kubernetes'
+)
 
-    # Define a function to print the current date
-    def print_date():
-        print(f"Current date and time: {datetime.now()}")
+# Define the Spark application spec
+spark_app = {
+    "apiVersion": "sparkoperator.k8s.io/v1beta2",
+    "kind": "SparkApplication",
+    "metadata": {
+        "name": "spark-pi",
+        "namespace": "spark-batch"  # Updated namespace
+    },
+    "spec": {
+        "type": "Scala",
+        "mode": "cluster",
+        "image": "gcr.io/spark-operator/spark:v3.1.1",
+        "imagePullPolicy": "Always",
+        "mainClass": "org.apache.spark.examples.SparkPi",
+        "mainApplicationFile": "local:///opt/spark/examples/jars/spark-examples_2.12-3.1.1.jar",
+        "sparkVersion": "3.1.1",
+        "restartPolicy": {
+            "type": "Never"
+        },
+        "driver": {
+            "cores": 1,
+            "coreLimit": "1200m",
+            "memory": "1G",
+            "serviceAccount": "spark",
+            "labels": {
+                "purpose": "spark-batch-job"
+            }
+        },
+        "executor": {
+            "cores": 1,
+            "instances": 2,
+            "memory": "1G",
+            "labels": {
+                "purpose": "spark-batch-job"
+            }
+        },
+        "monitoring": {
+            "exposeDriverMetrics": True,
+            "exposeExecutorMetrics": True,
+            "prometheus": {
+                "jmxExporterJar": "/prometheus/jmx_prometheus_javaagent-0.11.0.jar",
+                "port": 8090
+            }
+        }
+    }
+}
 
+# Create Spark submit operator
+submit_spark = SparkKubernetesOperator(
+    task_id='submit_spark',
+    application_file=spark_app,
+    namespace='spark-batch',  # Updated namespace
+    dag=dag
+)
 
-    # Define tasks using PythonOperator
-    print_date_task = PythonOperator(
-        task_id='print_date_task',
-        python_callable=print_date
-    )
+# Create Spark monitor operator
+monitor_spark = SparkKubernetesSensor(
+    task_id='monitor_spark',
+    application_name="{{ task_instance.xcom_pull(task_ids='submit_spark')['metadata']['name'] }}",
+    namespace='spark-batch',  # Updated namespace
+    dag=dag
+)
+
+submit_spark >> monitor_spark

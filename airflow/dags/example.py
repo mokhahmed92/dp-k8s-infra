@@ -4,10 +4,11 @@ from airflow.providers.cncf.kubernetes.operators.spark_kubernetes import SparkKu
 from airflow.providers.cncf.kubernetes.sensors.spark_kubernetes import SparkKubernetesSensor
 from datetime import datetime, timedelta
 
+NAMESPACE = 'spark-ns' 
+
 default_args = {
-    'owner': 'airflow',
+    'owner': 'mokhtar',
     'depends_on_past': False,
-    'start_date': datetime(2024, 1, 1),
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
@@ -17,7 +18,7 @@ default_args = {
 dag = DAG(
     'spark_pi_example',
     default_args=default_args,
-    schedule_interval=timedelta(days=1),
+    schedule_interval=None, 
     description='Submit Spark Pi Job on Kubernetes'
 )
 
@@ -27,7 +28,7 @@ spark_app = {
     "kind": "SparkApplication",
     "metadata": {
         "name": "spark-pi",
-        "namespace": "spark-batch"  # Updated namespace
+        "namespace": f"{NAMESPACE}"  # Updated namespace
     },
     "spec": {
         "type": "Scala",
@@ -72,7 +73,7 @@ spark_app = {
 submit_spark = SparkKubernetesOperator(
     task_id='submit_spark',
     application_file=spark_app,
-    namespace='spark-batch',  # Updated namespace
+    namespace=NAMESPACE,  # Updated namespace
     dag=dag
 )
 
@@ -80,7 +81,7 @@ submit_spark = SparkKubernetesOperator(
 monitor_spark = SparkKubernetesSensor(
     task_id='monitor_spark',
     application_name="{{ task_instance.xcom_pull(task_ids='submit_spark')['metadata']['name'] }}",
-    namespace='spark-batch',  # Updated namespace
+    namespace=NAMESPACE,  # Updated namespace
     dag=dag
 )
 

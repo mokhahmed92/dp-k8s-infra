@@ -33,7 +33,7 @@ spark_app = {
     "spec": {
         "type": "Scala",
         "mode": "cluster",
-        "image": "gcr.io/spark-operator/spark:v3.1.1",
+        "image": "apache/spark:3.4.4-scala2.12-java11-python3-r-ubuntu",
         "imagePullPolicy": "Always",
         "mainClass": "org.apache.spark.examples.SparkPi",
         "mainApplicationFile": "local:///opt/spark/examples/jars/spark-examples_2.12-3.1.1.jar",

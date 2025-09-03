@@ -1,0 +1,67 @@
+# Spark Operator values based on official Kubeflow chart
+# https://github.com/kubeflow/spark-operator/tree/master/charts/spark-operator-chart
+
+# Spark configuration
+spark:
+  # Watch only team-alpha and team-beta namespaces for Spark jobs
+  jobNamespaces:
+  - team-alpha
+  - team-beta
+
+# Controller configuration
+controller:
+  replicas: 1
+  workers: 10
+  logLevel: info
+  
+  # Resource limits for the controller
+  resources:
+    limits:
+      cpu: 100m
+      memory: 300Mi
+    requests:
+      cpu: 100m
+      memory: 300Mi
+
+# Webhook configuration
+webhook:
+  enable: true
+  port: 9443
+  namespaceSelector: ""
+  
+  # Resource limits for the webhook
+  resources:
+    limits:
+      cpu: 100m
+      memory: 300Mi
+    requests:
+      cpu: 100m
+      memory: 300Mi
+
+# Metrics configuration
+metrics:
+  enable: true
+  port: 8080
+  endpoint: /metrics
+
+# Service accounts configuration
+serviceAccounts:
+  spark:
+    create: false  # We'll use the existing team service accounts
+  sparkoperator:
+    create: true
+    name: spark-operator
+
+# Enable batch scheduler integration
+batchScheduler:
+  enable: false  # Set to true when Volcano is installed
+
+# Resource quotas are managed per team namespace
+resourceQuotaEnforcement:
+  enable: false
+
+# Enable leader election for HA
+leaderElection:
+  enable: true
+  lockName: spark-operator-lock
+  lockNamespace: spark-operator

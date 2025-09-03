@@ -1,0 +1,40 @@
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: Queue
+metadata:
+  name: queue-theta
+spec:
+  weight: 40
+  capability:
+    cpu: "8000m"
+    memory: "16Gi"
+  reclaimable: true
+  guarantee:
+    resource:
+      cpu: "4000m"
+      memory: "8Gi"
+---
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: Queue
+metadata:
+  name: queue-delta
+spec:
+  weight: 40
+  capability:
+    cpu: "8000m"
+    memory: "16Gi"
+  reclaimable: true
+  guarantee:
+    resource:
+      cpu: "4000m"
+      memory: "8Gi"
+---
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: Queue
+metadata:
+  name: default
+spec:
+  weight: 20
+  reclaimable: false
+  capability:
+    cpu: "4000m"
+    memory: "8Gi"
